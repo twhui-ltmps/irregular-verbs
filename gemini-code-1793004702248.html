@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Mario Verb Challenge</title>
+    <!-- Google Sign-in API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google Fonts for Retro Arcade Style -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Sniglet:wght@400;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --mario-red: #e52521;
+            --mario-blue: #00247d;
+            --mario-yellow: #fbd000;
+            --mario-green: #43b047;
+            --mario-brick: #b84418;
+            --mario-sky: #6b8cff;
+            --box-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #2d3436;
+            --correct-bg: #d4edda;
+            --wrong-bg: #f8d7da;
+        }
+
+        body {
+            font-family: 'Sniglet', cursive, sans-serif;
+            background: #5c94fc;
+            background-image: 
+                linear-gradient(to bottom, transparent 80%, rgba(67, 176, 71, 0.8) 80%),
+                radial-gradient(circle at 50% 90%, #00b894 10%, transparent 20%);
+            background-size: 100% 100%, 120px 120px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden; 
+            touch-action: manipulation;
+        }
+
+        /* Floating background items (Mushrooms, Stars, Coins) */
+        .bg-symbols {
+            position: fixed; width: 100%; height: 100%; top: 0; left: 0;
+            pointer-events: none; z-index: -1; overflow: hidden;
+        }
+        .symbol {
+            position: absolute; font-size: 2rem;
+            animation: floatUp 8s linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 8-bit Pixel Border Styling */
+        .container {
+            background-color: var(--box-bg);
+            padding: 30px;
+            border-radius: 10px;
+            border: 6px solid #000;
+            box-shadow: 0 10px 0 #b84418, 0 15px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 520px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            max-height: 98vh;
+            overflow-y: auto;
+        }
+
+        h1 { 
+            font-family: 'Press Start 2P', cursive;
+            color: var(--mario-red); 
+            font-size: 20px;
+            line-height: 1.5;
+            margin-top: 0; 
+            text-shadow: 3px 3px 0 #000;
+            -webkit-text-stroke: 1px #fbd000;
+        }
+
+        h2 {
+            font-family: 'Press Start 2P', cursive;
+            color: var(--mario-brick);
+            font-size: 16px;
+            text-shadow: 2px 2px 0 #fbd000;
+        }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: marioJump 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        @keyframes marioJump {
+            0% { opacity: 0; transform: translateY(50px) scale(0.9); }
+            50% { transform: translateY(-10px) scale(1.05); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #000; font-size: 16px; }
+        
+        select, input[type="number"], input[type="text"] {
+            width: 100%; padding: 12px; border-radius: 8px; border: 4px solid #000; 
+            font-size: 18px; font-family: 'Sniglet', cursive; box-sizing: border-box; 
+            transition: border-color 0.2s; background: #fff;
+        }
+        select:focus, input:focus { border-color: var(--mario-red); outline: none; }
+
+        .btn {
+            background-color: var(--mario-red); 
+            color: white; 
+            border: 4px solid #000; 
+            padding: 14px 20px;
+            border-radius: 12px; 
+            font-size: 18px; 
+            font-family: 'Sniglet', cursive;
+            font-weight: bold; 
+            cursor: pointer; 
+            margin: 8px 0; 
+            width: 100%; 
+            box-sizing: border-box; 
+            box-shadow: 0 6px 0 #8b0000;
+            transition: all 0.1s ease;
+            text-shadow: 2px 2px 0 #000;
+        }
+        .btn:hover { 
+            background-color: #ff3833; 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 0 #8b0000; 
+        }
+        .btn:active { 
+            transform: translateY(4px); 
+            box-shadow: 0 2px 0 #8b0000; 
+        }
+        
+        .btn.secondary { 
+            background-color: var(--mario-green); 
+            box-shadow: 0 6px 0 #1e5e23; 
+        }
+        .btn.secondary:hover { 
+            background-color: #51cb56; 
+            box-shadow: 0 8px 0 #1e5e23; 
+        }
+        
+        .btn.rank-btn { 
+            background-color: var(--mario-yellow); 
+            color: #000; 
+            text-shadow: none;
+            box-shadow: 0 6px 0 #b59500; 
+        }
+        .btn.rank-btn:hover { 
+            background-color: #ffea61; 
+            box-shadow: 0 8px 0 #b59500; 
+        }
+
+        .btn.outline-btn { 
+            background-color: #dfe6e9; color: #000; border: 3px solid #000; 
+            box-shadow: 0 4px 0 #b2bec3; text-shadow: none; margin-top: 5px; padding: 10px; 
+        }
+        .btn.outline-btn:hover { background-color: #fff; transform: translateY(-2px); }
+
+        .stats-bar {
+            display: flex; justify-content: space-between; background: #fbd000; 
+            border: 3px solid #000; padding: 10px 15px; border-radius: 10px; 
+            font-size: 16px; margin-bottom: 15px; font-weight: bold; color: #000;
+            box-shadow: 0 4px 0 #b59500;
+        }
+
+        /* Question Box (No Bold) */
+        .question-box {
+            font-size: 36px; font-weight: normal; margin: 10px 0 20px 0; color: #000; 
+            min-height: 50px; display: flex; align-items: center; justify-content: center;
+            background: #fff; border: 4px solid #000; border-radius: 12px;
+            box-shadow: inset 0 4px 0 #ccc, 0 6px 0 #000;
+            padding: 10px;
+        }
+        
+        .target-tense {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px; color: var(--mario-blue); font-weight: bold; margin-bottom: 8px; 
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .choices-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* Choice Buttons (No Bold) */
+        .choice-btn {
+            background: var(--mario-yellow);
+            border: 4px solid #000;
+            border-radius: 10px;
+            padding: 16px 8px;
+            font-size: 20px;
+            font-family: 'Sniglet', cursive;
+            font-weight: normal;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.1s;
+            text-transform: lowercase;
+            box-shadow: 0 6px 0 #b59500;
+            user-select: none;
+            touch-action: manipulation;
+            position: relative;
+        }
+        .choice-btn:hover {
+            background-color: #ffea61;
+            transform: translateY(-3px);
+            box-shadow: 0 9px 0 #b59500;
+        }
+        .choice-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b59500;
+        }
+
+        @keyframes pop { 50% { transform: scale(1.05); } }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .feedback-correct { animation: pop 0.3s ease; background-color: var(--correct-bg) !important; border-color: var(--mario-green) !important; }
+        .feedback-wrong { animation: shake 0.3s ease; background-color: var(--wrong-bg) !important; border-color: var(--mario-red) !important; }
+
+        .table-container { max-height: 320px; overflow-y: auto; border-radius: 8px; border: 3px solid #000; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { border-bottom: 2px solid #000; padding: 10px; text-align: center; font-size: 15px; }
+        th { background-color: var(--mario-red); color: white; position: sticky; top: 0; white-space: nowrap; font-family: 'Press Start 2P', cursive; font-size: 10px; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #ffeaa7; }
+
+        .leaderboard-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .leaderboard-filters select { flex: 1; min-width: 140px; }
+
+        #confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+        .confetti { position: absolute; width: 12px; height: 12px; border: 2px solid #000; }
+        
+        .auth-section {
+            background: #fff; border: 3px solid #000; border-radius: 12px;
+            padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 0 #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-symbols" id="bg-symbols"></div>
+    <div id="confetti-container"></div>
+
+    <div class="container" id="app-container">
+        
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="screen active">
+            <h1>SUPER MARIO<br>VERB CHALLENGE</h1>
+            
+            <div class="auth-section">
+                <div id="google-btn-container" style="display: flex; justify-content: center; min-height: 40px;"></div>
+                <div id="user-welcome" style="display: none; color: var(--mario-red); font-weight: 800; font-size: 18px;"></div>
+                <p id="login-hint" style="margin: 8px 0 0; color: #636e72; font-size: 13px;">💡 Sign in with Google to save your high scores!</p>
+            </div>
+
+            <div class="form-group">
+                <label>Select World (Level):</label>
+                <select id="question-type">
+                    <option value="level1">🍄 World 1: Present Continuous (-ing)</option>
+                    <option value="level2">🔥 World 2: Past Tense (V2)</option>
+                    <option value="level3">⭐ World 3: Past Participle (V3)</option>
+                    <option value="challenge">👑 World 4: Bowser's Castle (Mixed)</option>
+                </select>
+            </div>
+            
+            <button class="btn" onclick="startGame('infinite')">♾️ Free Play Mode</button>
+            <button class="btn rank-btn" onclick="startGame('timed')">⏱️ 3-Min Coin Dash</button>
+            
+            <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 5px;">
+                <button class="btn secondary" onclick="showLeaderboard()">🏆 Hall of Fame</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="stats-bar">
+                <span id="time-display" style="color: #000;">TIME: 03:00</span>
+                <span id="score-display" style="display: none; color: #b84418;">🪙 COINS: 0</span>
+                <span id="progress-display" style="color: #00b894;">✔ 0/0</span>
+            </div>
+            <div id="level-display" style="color: var(--mario-red); font-weight: bold; margin-bottom:10px; font-size: 16px;"></div>
+            
+            <div class="target-tense" id="target-tense">Target Form</div>
+            <div class="question-box" id="question-text">verb</div>
+            
+            <!-- Multiple Choice Grid -->
+            <div id="choices-container" class="choices-grid">
+                <!-- Choice buttons injected via JS -->
+            </div>
+
+            <button class="btn outline-btn" onclick="confirmExit()" style="margin-top: 10px;">🏠 Exit World</button>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <h2>COURSE CLEAR! 🎉</h2>
+            <div id="final-stats" style="font-size: 18px; line-height: 1.8; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; border: 3px solid #000;"></div>
+            
+            <div id="upload-section" class="form-group" style="display: none; background: #fff; padding: 15px; border-radius: 10px; border: 3px solid var(--mario-yellow);">
+                <label style="color: var(--mario-brick); text-align: center; font-size: 18px;">🔥 Save High Score</label>
+                
+                <div style="text-align: center; margin-bottom: 12px; font-size: 16px; font-weight: bold;">
+                    Player: <span id="upload-name-display" style="color: var(--mario-blue); text-decoration: underline;"></span>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <select id="class-select" style="flex: 1;">
+                        <option value="5A">5A</option>
+                        <option value="5B">5B</option>
+                        <option value="5C">5C</option>
+                        <option value="5D">5D</option>
+                        <option value="5E">5E</option>
+                    </select>
+                    <input type="number" id="student-num" placeholder="No. (1-40)" min="1" max="40" style="flex: 2;">
+                </div>
+                <button class="btn rank-btn" id="submit-score-btn" onclick="submitScore()">🚀 Upload Score</button>
+            </div>
+            
+            <button class="btn secondary" onclick="showScreen('menu-screen')">🏠 Main Menu</button>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="screen">
+            <h2>HALL OF FAME</h2>
+            <div class="leaderboard-filters">
+                <select id="filter-mode" onchange="fetchLeaderboard()">
+                    <option value="timed_level1">🍄 World 1: Present Cont.</option>
+                    <option value="timed_level2">🔥 World 2: Past Tense</option>
+                    <option value="timed_level3">⭐ World 3: Past Participle</option>
+                    <option value="timed_challenge">👑 World 4: Bowser's Castle</option>
+                </select>
+                
+                <select id="filter-class" onchange="fetchLeaderboard()">
+                    <option value="ALL">🌟 All Classes</option>
+                    <option value="5A">5A</option>
+                    <option value="5B">5B</option>
+                    <option value="5C">5C</option>
+                    <option value="5D">5D</option>
+                    <option value="5E">5E</option>
+                </select>
+            </div>
+            <div class="table-container">
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>RANK</th>
+                            <th>CLASS</th>
+                            <th>NO.</th>
+                            <th>NAME</th>
+                            <th>COINS</th>
+                            <th>ACC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+            <br>
+            <button class="btn secondary" onclick="showScreen('menu-screen')">🏠 Back</button>
+        </div>
+
+    </div>
+
+    <!-- Mario Background Items Logic -->
+    <script>
+        const marioIcons = ['🍄', '⭐', '🪙', '🔥', '❓', '📦'];
+        const bgContainer = document.getElementById('bg-symbols');
+        for(let i=0; i<15; i++) {
+            let el = document.createElement('div');
+            el.className = 'symbol';
+            el.innerText = marioIcons[Math.floor(Math.random() * marioIcons.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 4 + 6) + 's';
+            el.style.animationDelay = (Math.random() * 4) + 's';
+            bgContainer.appendChild(el);
+        }
+
+        function fireConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            const colors = ['#e52521', '#fbd000', '#43b047', '#00247d', '#ffffff'];
+            for(let i=0; i<60; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-10px';
+                conf.style.transition = 'transform 3s ease-in, top 3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 3s';
+                
+                const fallX = (Math.random() - 0.5) * 250;
+                const fallY = window.innerHeight + 50;
+                const rotate = Math.random() * 720;
+                container.appendChild(conf);
+                
+                setTimeout(() => {
+                    conf.style.transform = `translateX(${fallX}px) rotate(${rotate}deg)`;
+                    conf.style.top = `${fallY}px`;
+                    conf.style.opacity = 0;
+                }, 50);
+            }
+        }
+    </script>
+
+    <!-- Google Login Logic -->
+    <script>
+        let currentUser = null; 
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function handleCredentialResponse(response) {
+            const payload = parseJwt(response.credential);
+            if(payload) {
+                const lastName = payload.family_name || payload.name || "Mario"; 
+                currentUser = {
+                    id: payload.sub,
+                    lastName: lastName
+                };
+                document.getElementById('google-btn-container').style.display = 'none';
+                document.getElementById('login-hint').style.display = 'none';
+                
+                const welcomeEl = document.getElementById('user-welcome');
+                welcomeEl.innerText = `🍄 Welcome, ${currentUser.lastName}!`;
+                welcomeEl.style.display = 'block';
+            }
+        }
+
+        window.onload = function () {
+            google.accounts.id.initialize({
+                client_id: "573911894747-0c28hfr0bmkjnn8pkm2msg6sjal1thqe.apps.googleusercontent.com",
+                callback: handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("google-btn-container"),
+                { theme: "outline", size: "large", shape: "pill", width: 250 }
+            );
+        };
+    </script>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFG9cgnSV573EE_D-i1YyOwFwvg-GLbys",
+            authDomain: "math-learning-platform-d80c7.firebaseapp.com",
+            projectId: "math-learning-platform-d80c7",
+            storageBucket: "math-learning-platform-d80c7.firebasestorage.app",
+            messagingSenderId: "484525571730",
+            appId: "1:484525571730:web:f6c2ec959cf40c1a7cf04b",
+            measurementId: "G-S95BCB5WSM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.saveToFirebase = async (data) => {
+            const btn = document.getElementById('submit-score-btn');
+            try {
+                btn.innerText = "Uploading...";
+                btn.disabled = true;
+                
+                const modeSuffix = `timed_${data.questionType}`;
+                const docId = `${data.googleId}_${modeSuffix}`;
+                
+                const docRef = doc(db, "leaderboard", docId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const oldData = docSnap.data();
+                    if (data.score <= oldData.score) {
+                        alert(`Your high score in this world is ${oldData.score} Coins. Keep trying! 💪`);
+                        btn.innerText = "🚀 Upload Score";
+                        btn.disabled = false;
+                        
+                        document.getElementById('filter-mode').value = modeSuffix;
+                        showScreen('leaderboard-screen');
+                        fetchLeaderboard();
+                        return;
+                    }
+                }
+                
+                await setDoc(docRef, {
+                    class: data.class,
+                    studentNum: data.studentNum,
+                    lastName: data.lastName,
+                    score: data.score,
+                    accuracy: data.accuracy,
+                    gameMode: "timed",
+                    questionType: data.questionType,
+                    timestamp: new Date()
+                });
+                
+                alert("COURSE CLEAR! New record saved! 🎉");
+                document.getElementById('filter-mode').value = modeSuffix;
+                showScreen('leaderboard-screen');
+                fetchLeaderboard();
+            } catch (e) {
+                console.error("Error saving document: ", e);
+                alert("Upload failed. Please check your connection.");
+            } finally {
+                btn.innerText = "🚀 Upload Score";
+                btn.disabled = false;
+            }
+        };
+
+        window.fetchLeaderboard = async () => {
+            const tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = "<tr><td colspan='6'>Loading... ⏳</td></tr>";
+            
+            const modeFilter = document.getElementById('filter-mode').value;
+            const classFilter = document.getElementById('filter-class').value;
+            
+            let qType = modeFilter.split('_')[1]; 
+            
+            let queryConditions = [
+                where("gameMode", "==", "timed"),
+                where("questionType", "==", qType)
+            ];
+            
+            if (classFilter !== "ALL") {
+                queryConditions.push(where("class", "==", classFilter));
+            }
+
+            try {
+                const q = query(collection(db, "leaderboard"), ...queryConditions, orderBy("score", "desc"), limit(30));
+                const querySnapshot = await getDocs(q);
+                
+                tbody.innerHTML = "";
+                let rank = 1;
+                
+                if(querySnapshot.empty) {
+                    tbody.innerHTML = "<tr><td colspan='6'>No high scores yet!</td></tr>";
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    let rankDisplay = rank === 1 ? "🥇 1" : rank === 2 ? "🥈 2" : rank === 3 ? "🥉 3" : rank;
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:bold; color: ${rank<=3?'var(--mario-red)':'inherit'};">${rankDisplay}</td>
+                            <td>${data.class}</td>
+                            <td>${data.studentNum}</td>
+                            <td style="color: var(--mario-blue); font-weight: bold;">${data.lastName || 'Mario'}</td>
+                            <td style="font-weight:bold; color:var(--mario-brick); font-size:18px;">🪙 ${data.score}</td>
+                            <td>${data.accuracy}%</td>
+                        </tr>
+                    `;
+                    rank++;
+                });
+            } catch (e) {
+                console.error("Error fetching docs: ", e);
+                tbody.innerHTML = `<tr><td colspan='6' style="color:red; font-size:13px;">
+                    Failed to load data. Firebase index may be missing.
+                </td></tr>`;
+            }
+        };
+    </script>
+
+    <!-- Game Logic & Question Banks -->
+    <script>
+        let mode = '';
+        let typeLevel = 'level1'; 
+        let timer = null;
+        let timeLeft = 0;
+        
+        let stats = { total: 0, correct: 0, score: 0, consecutive: 0 };
+        let currentQuestion = { prompt: "", ans: "", type: "" };
+        const container = document.getElementById('app-container');
+
+        // Master Verb Bank (50 verbs, British English spelling)
+        const verbsBank = [
+            { inf: "begin", presCont: "beginning", past: "began", pp: "begun" },
+            { inf: "bite", presCont: "biting", past: "bit", pp: "bitten" },
+            { inf: "break", presCont: "breaking", past: "broke", pp: "broken" },
+            { inf: "bring", presCont: "bringing", past: "brought", pp: "brought" },
+            { inf: "build", presCont: "building", past: "built", pp: "built" },
+            { inf: "buy", presCont: "buying", past: "bought", pp: "bought" },
+            { inf: "cancel", presCont: "cancelling", past: "cancelled", pp: "cancelled" },
+            { inf: "catch", presCont: "catching", past: "caught", pp: "caught" },
+            { inf: "choose", presCont: "choosing", past: "chose", pp: "chosen" },
+            { inf: "come", presCont: "coming", past: "came", pp: "come" },
+            { inf: "cost", presCont: "costing", past: "cost", pp: "cost" },
+            { inf: "cut", presCont: "cutting", past: "cut", pp: "cut" },
+            { inf: "do", presCont: "doing", past: "did", pp: "done" },
+            { inf: "draw", presCont: "drawing", past: "drew", pp: "drawn" },
+            { inf: "drink", presCont: "drinking", past: "drank", pp: "drunk" },
+            { inf: "drive", presCont: "driving", past: "drove", pp: "driven" },
+            { inf: "eat", presCont: "eating", past: "ate", pp: "eaten" },
+            { inf: "fall", presCont: "falling", past: "fell", pp: "fallen" },
+            { inf: "feel", presCont: "feeling", past: "felt", pp: "felt" },
+            { inf: "fight", presCont: "fighting", past: "fought", pp: "fought" },
+            { inf: "find", presCont: "finding", past: "found", pp: "found" },
+            { inf: "fly", presCont: "flying", past: "flew", pp: "flown" },
+            { inf: "forget", presCont: "forgetting", past: "forgot", pp: "forgotten" },
+            { inf: "give", presCont: "giving", past: "gave", pp: "given" },
+            { inf: "go", presCont: "going", past: "went", pp: "gone" },
+            { inf: "grow", presCont: "growing", past: "grew", pp: "grown" },
+            { inf: "have", presCont: "having", past: "had", pp: "had" },
+            { inf: "hear", presCont: "hearing", past: "heard", pp: "heard" },
+            { inf: "hide", presCont: "hiding", past: "hid", pp: "hidden" },
+            { inf: "hit", presCont: "hitting", past: "hit", pp: "hit" },
+            { inf: "keep", presCont: "keeping", past: "kept", pp: "kept" },
+            { inf: "know", presCont: "knowing", past: "knew", pp: "known" },
+            { inf: "learn", presCont: "learning", past: "learnt", pp: "learnt" },
+            { inf: "leave", presCont: "leaving", past: "left", pp: "left" },
+            { inf: "lose", presCont: "losing", past: "lost", pp: "lost" },
+            { inf: "make", presCont: "making", past: "made", pp: "made" },
+            { inf: "meet", presCont: "meeting", past: "met", pp: "met" },
+            { inf: "pay", presCont: "paying", past: "paid", pp: "paid" },
+            { inf: "read", presCont: "reading", past: "read", pp: "read" },
+            { inf: "ride", presCont: "riding", past: "rode", pp: "ridden" },
+            { inf: "run", presCont: "running", past: "ran", pp: "run" },
+            { inf: "say", presCont: "saying", past: "said", pp: "said" },
+            { inf: "see", presCont: "seeing", past: "saw", pp: "seen" },
+            { inf: "sell", presCont: "selling", past: "sold", pp: "sold" },
+            { inf: "send", presCont: "sending", past: "sent", pp: "sent" },
+            { inf: "sing", presCont: "singing", past: "sang", pp: "sung" },
+            { inf: "speak", presCont: "speaking", past: "spoke", pp: "spoken" },
+            { inf: "take", presCont: "taking", past: "took", pp: "taken" },
+            { inf: "travel", presCont: "travelling", past: "travelled", pp: "travelled" },
+            { inf: "write", presCont: "writing", past: "wrote", pp: "written" }
+        ];
+
+        const typeConfigs = {
+            'level1': { pts: 10, name: "🍄 World 1: Present Continuous" },
+            'level2': { pts: 10, name: "🔥 World 2: Past Tense" },
+            'level3': { pts: 10, name: "⭐ World 3: Past Participle" },
+            'challenge': { pts: 20, name: "👑 World 4: Bowser's Castle" }
+        };
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showLeaderboard() {
+            showScreen('leaderboard-screen');
+            if(window.fetchLeaderboard) window.fetchLeaderboard();
+        }
+
+        function confirmExit() {
+            if (confirm("Are you sure you want to exit the world?\n⚠️ Progress will be lost!")) {
+                clearInterval(timer);
+                showScreen('menu-screen');
+            }
+        }
+
+        function startGame(selectedMode) {
+            if (selectedMode === 'timed' && !currentUser) {
+                alert('🍄 You must Sign in with Google to play Timed Coin Dash!');
+                return;
+            }
+
+            mode = selectedMode;
+            stats = { total: 0, correct: 0, score: 0, consecutive: 0 };
+            typeLevel = document.getElementById('question-type').value;
+            
+            document.getElementById('score-display').style.display = (mode === 'timed') ? 'inline' : 'none';
+            document.getElementById('level-display').innerText = `${typeConfigs[typeLevel].name}`;
+            
+            updateStatsUI();
+            
+            if (mode === 'infinite') {
+                document.getElementById('time-display').innerText = "♾️ FREE PLAY";
+                clearInterval(timer);
+            } else {
+                timeLeft = 180; // 3 minutes
+                updateTimeUI();
+                clearInterval(timer);
+                timer = setInterval(timerTick, 1000);
+            }
+
+            showScreen('game-screen');
+            generateQuestion();
+        }
+
+        function timerTick() {
+            timeLeft--;
+            updateTimeUI();
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                endGame();
+            }
+        }
+
+        function updateTimeUI() {
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            document.getElementById('time-display').innerText = `TIME: ${m}:${s.toString().padStart(2, '0')}`;
+            if(timeLeft <= 10 && mode !== 'infinite') {
+                document.getElementById('time-display').style.color = 'var(--mario-red)';
+            } else {
+                document.getElementById('time-display').style.color = '#000';
+            }
+        }
+
+        function generateRealisticDistractors(verb, askType, correctAnswer) {
+            let options = new Set();
+            let inf = verb.inf;
+            let past = verb.past;
+            let pp = verb.pp;
+            
+            if (askType === 'level1') {
+                if (inf.endsWith('e')) options.add(inf + "ing");
+                options.add(inf + inf.slice(-1) + "ing");
+                options.add(inf.slice(0, -1) + "ing");
+                options.add(past + "ing");
+            } else if (askType === 'level2') {
+                options.add(inf + "ed");
+                if (inf.endsWith('e')) options.add(inf + "d");
+                options.add(past + "ed");
+                if (past !== pp) options.add(pp);
+                options.add(inf.slice(0, -1) + "ed");
+            } else if (askType === 'level3') {
+                options.add(inf + "ed");
+                if (past !== pp) options.add(past);
+                options.add(past + "en");
+                options.add(inf + "en");
+                options.add(pp + "ed");
+            }
+
+            let validDistractors = Array.from(options).filter(opt => opt !== correctAnswer && opt !== inf);
+
+            if (validDistractors.length < 3) {
+                if (askType === 'level1') {
+                    validDistractors.push(inf + "eing"); 
+                    validDistractors.push(pp + "ing");
+                } else {
+                    validDistractors.push(verb.presCont); 
+                }
+            }
+
+            validDistractors.sort(() => Math.random() - 0.5);
+            return validDistractors.slice(0, 3);
+        }
+
+        function generateQuestion() {
+            const verb = verbsBank[Math.floor(Math.random() * verbsBank.length)];
+            
+            let askType = typeLevel;
+            if (typeLevel === 'challenge') {
+                const types = ['level1', 'level2', 'level3'];
+                askType = types[Math.floor(Math.random() * types.length)];
+            }
+            
+            let label = "";
+            let answer = "";
+            
+            if (askType === 'level1') {
+                label = "Present Continuous (+ing)";
+                answer = verb.presCont;
+            } else if (askType === 'level2') {
+                label = "Past Tense (V2)";
+                answer = verb.past;
+            } else if (askType === 'level3') {
+                label = "Past Participle (V3)";
+                answer = verb.pp;
+            }
+
+            currentQuestion = { prompt: verb.inf, ans: answer, type: label };
+            
+            document.getElementById('target-tense').innerText = label;
+            document.getElementById('question-text').innerText = verb.inf;
+
+            let options = [answer];
+            let mistakes = generateRealisticDistractors(verb, askType, answer);
+            options.push(...mistakes);
+
+            options.sort(() => Math.random() - 0.5);
+
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedAns) {
+            const isCorrect = selectedAns === currentQuestion.ans;
+            
+            stats.total++;
+            if (isCorrect) {
+                stats.correct++;
+                stats.consecutive++;
+                
+                if (mode === 'timed') {
+                    stats.score += typeConfigs[typeLevel].pts;
+                }
+                
+                triggerFeedback('correct');
+            } else {
+                stats.consecutive = 0; 
+                if (mode === 'timed') stats.score = Math.max(0, stats.score - 5);
+                triggerFeedback('wrong');
+                alert(`MAMAMIA! Incorrect! The correct form for "${currentQuestion.prompt}" is "${currentQuestion.ans}".`);
+            }
+            
+            updateStatsUI();
+            generateQuestion();
+        }
+
+        function triggerFeedback(type) {
+            container.classList.remove('feedback-correct', 'feedback-wrong');
+            void container.offsetWidth; 
+            container.classList.add(`feedback-${type}`);
+            setTimeout(() => {
+                container.classList.remove(`feedback-${type}`);
+            }, 300);
+        }
+
+        function updateStatsUI() {
+            const acc = stats.total === 0 ? 0 : Math.round((stats.correct / stats.total) * 100);
+            document.getElementById('progress-display').innerText = `✔ ${stats.correct}/${stats.total} (${acc}%)`;
+            document.getElementById('score-display').innerText = `🪙 COINS: ${stats.score}`;
+        }
+
+        function endGame() {
+            showScreen('result-screen');
+            const acc = stats.total === 0 ? 0 : Math.round((stats.correct / stats.total) * 100);
+            
+            let resultHTML = `
+                Total Questions: <b style="color:var(--mario-blue)">${stats.total}</b><br>
+                Correct Answers: <b style="color:var(--mario-green)">${stats.correct}</b><br>
+                Accuracy: <b>${acc}%</b><br>
+            `;
+            
+            if (mode === 'timed' && currentUser) {
+                resultHTML += `<hr style="border:0; border-top:2px dashed #000; margin:15px 0;"><span style="color:var(--mario-brick); font-size: 26px; font-weight:900;">COINS COLLECTED: 🪙 ${stats.score}</span>`;
+                
+                document.getElementById('upload-section').style.display = 'block';
+                document.getElementById('upload-name-display').innerText = currentUser.lastName;
+                document.getElementById('submit-score-btn').disabled = false;
+                document.getElementById('submit-score-btn').innerText = "🚀 Upload Score";
+                fireConfetti(); 
+            } else {
+                document.getElementById('upload-section').style.display = 'none';
+            }
+            
+            document.getElementById('final-stats').innerHTML = resultHTML;
+        }
+
+        function submitScore() {
+            const stuClass = document.getElementById('class-select').value;
+            const stuNum = document.getElementById('student-num').value;
+            
+            if(!stuNum || stuNum < 1 || stuNum > 40) {
+                alert("⚠️ Please enter a valid Class Number (1-40) !");
+                return;
+            }
+
+            const acc = stats.total === 0 ? 0 : Math.round((stats.correct / stats.total) * 100);
+            
+            const data = {
+                class: stuClass,
+                studentNum: parseInt(stuNum),
+                lastName: currentUser.lastName,
+                googleId: currentUser.id,
+                score: stats.score,
+                accuracy: acc,
+                questionType: typeLevel 
+            };
+
+            if(window.saveToFirebase) {
+                window.saveToFirebase(data);
+            }
+        }
+    </script>
+</body>
+</html>
