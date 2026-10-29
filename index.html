@@ -718,7 +718,7 @@
       window.onload = function () {
         google.accounts.id.initialize({
           client_id:
-            "573911894747-0c28hfr0bmkjnn8pkm2msg6sjal1thqe.apps.googleusercontent.com",
+            "423673952299-u4veomcf9i4685f0ndokns9smis38spl.apps.googleusercontent.com",
           callback: handleCredentialResponse,
         });
         google.accounts.id.renderButton(
@@ -730,32 +730,27 @@
 
     <!-- Firebase Logic -->
     <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-      import {
-        getFirestore,
-        collection,
-        doc,
-        getDoc,
-        setDoc,
-        getDocs,
-        query,
-        orderBy,
-        limit,
-        where,
-      } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyCFG9cgnSV573EE_D-i1YyOwFwvg-GLbys",
-        authDomain: "math-learning-platform-d80c7.firebaseapp.com",
-        projectId: "math-learning-platform-d80c7",
-        storageBucket: "math-learning-platform-d80c7.firebasestorage.app",
-        messagingSenderId: "484525571730",
-        appId: "1:484525571730:web:f6c2ec959cf40c1a7cf04b",
-        measurementId: "G-S95BCB5WSM",
-      };
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCboCyXpErH7DckrjvNLiRYZ5pD8eC1O6o",
+    authDomain: "irregular-verbs-7cdc6.firebaseapp.com",
+    projectId: "irregular-verbs-7cdc6",
+    storageBucket: "irregular-verbs-7cdc6.firebasestorage.app",
+    messagingSenderId: "423673952299",
+    appId: "1:423673952299:web:8f260e1436dc3e623d126e",
+    measurementId: "G-NWLELK5QTP"
+  };
 
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
       window.saveToFirebase = async (data) => {
         const btn = document.getElementById("submit-score-btn");
