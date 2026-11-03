@@ -516,7 +516,7 @@
 
         window.onload = function () {
             google.accounts.id.initialize({
-                client_id: "423673952299-u4veomcf9i4685f0ndokns9smis38spl.apps.googleusercontent.com",
+                client_id: "623171860819-1fldq3op0pmilgapk5o2j9c3f8oa7d39.apps.googleusercontent.com",
                 callback: handleCredentialResponse
             });
             google.accounts.id.renderButton(
@@ -528,27 +528,28 @@
 
     <!-- Firebase Logic -->
 <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+  
+  import { 
+      getFirestore, collection, doc, getDoc, setDoc, query, where, orderBy, limit, getDocs 
+  } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
-    apiKey: "AIzaSyCboCyXpErH7DckrjvNLiRYZ5pD8eC1O6o",
-    authDomain: "irregular-verbs-7cdc6.firebaseapp.com",
-    projectId: "irregular-verbs-7cdc6",
-    storageBucket: "irregular-verbs-7cdc6.firebasestorage.app",
-    messagingSenderId: "423673952299",
-    appId: "1:423673952299:web:8f260e1436dc3e623d126e",
-    measurementId: "G-NWLELK5QTP"
+    apiKey: "AIzaSyDUODAImoAOc-o9sgOrhOYz1kImZcg3cqI",
+    authDomain: "test-7f93c.firebaseapp.com",
+    projectId: "test-7f93c",
+    storageBucket: "test-7f93c.firebasestorage.app",
+    messagingSenderId: "623171860819",
+    appId: "1:623171860819:web:587304c09b0e8bfcebc9a6",
+    measurementId: "G-S68W1EQDYS"
   };
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
+  
+  const db = getFirestore(app);
 
         window.saveToFirebase = async (data) => {
             const btn = document.getElementById('submit-score-btn');
@@ -665,7 +666,6 @@
         let currentQuestion = { prompt: "", ans: "", type: "" };
         const container = document.getElementById('app-container');
 
-// Master Verb Bank (Combined with JSON irregular verbs)
         const verbsBank = [
             { inf: "be", presCont: "being", past: "was, were", pp: "been" },
             { inf: "become", presCont: "becoming", past: "became", pp: "become" },
@@ -943,7 +943,6 @@
             }
         }
 
-        // Function to close the modal and move to the next question
         function closeModal() {
             document.getElementById('wrong-modal').style.display = 'none';
             generateQuestion();
