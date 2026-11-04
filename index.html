@@ -560,7 +560,7 @@
                 const modeSuffix = `timed_${data.questionType}`;
                 const docId = `${data.googleId}_${modeSuffix}`;
                 
-                const docRef = doc(db, "leaderboard", docId);
+                const docRef = doc(db, "irregular_verbs_leaderboard", docId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const oldData = docSnap.data();
