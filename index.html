@@ -560,7 +560,7 @@
                 const modeSuffix = `timed_${data.questionType}`;
                 const docId = `${data.googleId}_${modeSuffix}`;
                 
-                const docRef = doc(db, "irregular_verbs_leaderboard", docId);
+                const docRef = doc(db, "2627p5_verbs", docId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const oldData = docSnap.data();
@@ -619,7 +619,7 @@
             }
 
             try {
-                const q = query(collection(db, "leaderboard"), ...queryConditions, orderBy("score", "desc"), limit(30));
+                const q = query(collection(db, "2627p5_verbs"), ...queryConditions, orderBy("score", "desc"), limit(30));
                 const querySnapshot = await getDocs(q);
                 
                 tbody.innerHTML = "";
@@ -648,8 +648,8 @@
                 });
             } catch (e) {
                 console.error("Error fetching docs: ", e);
-                tbody.innerHTML = `<tr><td colspan='6' style="color:red; font-size:13px;">
-                    Failed to load data. Firebase index may be missing.
+                tbody.innerHTML = `<tr><td colspan='6' style="color:red; font-size:12px;">
+                    Failed to load data. Firebase index may be missing. Check browser console (F12) for index link.
                 </td></tr>`;
             }
         };
@@ -833,14 +833,12 @@
             let presCont = verb.presCont;
             
             if (askType === 'level1') {
-                // Present Continuous (-ing)
                 if (inf.endsWith('e') && !inf.endsWith('ee')) {
-                    options.add(inf + "ing"); // e.g. wakeing
+                    options.add(inf + "ing");
                 } else {
                     options.add(inf.endsWith('e') ? inf + "ing" : inf.slice(0, -1) + "ing");
                 }
                 
-                // Single vs double consonant distractors
                 if (presCont.match(/(ing)$/)) {
                     if (presCont.match(/([a-z])\1ing$/)) {
                         options.add(presCont.replace(/([a-z])\1ing$/, '$1ing'));
@@ -854,7 +852,6 @@
                 options.add(pp + "ing");
             } 
             else if (askType === 'level2') {
-                // Past Tense (V2)
                 options.add(inf + "ed");
                 if (inf.endsWith('e')) options.add(inf + "d");
                 options.add(past + "ed");
@@ -864,7 +861,6 @@
                 options.add(presCont);
             } 
             else if (askType === 'level3') {
-                // Past Participle (V3)
                 options.add(inf + "ed");
                 if (past !== pp) options.add(past);
                 options.add(past + "en");
@@ -873,10 +869,8 @@
                 options.add(presCont);
             }
 
-            // Filter out options matching the correct answer or empty strings
             let validDistractors = Array.from(options).filter(opt => opt && opt !== correctAnswer);
 
-            // Fallback pool to guarantee 3 unique wrong options
             const fallbackPool = [
                 inf + "ed", 
                 inf + "ing", 
@@ -963,7 +957,6 @@
                 if (mode === 'timed') stats.score = Math.max(0, stats.score - 5);
                 triggerFeedback('wrong');
                 
-                // Populate and show custom wrong modal
                 document.getElementById('modal-message').innerHTML = 
                     `<div class="modal-target">Target: ${currentQuestion.type}</div>
                      Incorrect! The correct form for <b>${currentQuestion.prompt}</b> is: 
